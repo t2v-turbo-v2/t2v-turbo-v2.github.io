@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://rg-lcd.github.io/">
+            Reward Guided Latent Consistency Distillation
+          </a>
+          <a class="navbar-item" href="https://t2v-turbo.github.io/">
+            T2V-Turbo: Breaking the Quality Bottleneck of Video Consistency Model with Mixed Reward Feedback
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+<head>
+  <title>T2V-Turbo-v2: Enhancing Video Generation Model Post-Training Through Data, Reward, and Conditional Guidance
+    Design</title>
+
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/mySwiper.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <link rel="icon" href="./favicon.ico?">
+
+
+
+  <script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <meta property="og:image:width" content="1600" />
+  <meta property="og:image:height" content="900" />
+
+  <style>
+    .carousel-control-prev,
+    .carousel-control-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5%;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      /* Ensure the buttons take the full height of the container */
+    }
+
+    .video-wrapper {
+      display: flex;
+      justify-content: center;
+      /* Center the video containers horizontally */
+      align-items: center;
+      /* Center the video containers vertically */
+      position: relative;
+      width: 70%;
+      /* Adjust the width to make the whole container smaller */
+      margin: auto;
+      /* Center the container */
+      gap: 1%;
+      /* Adjust the gap between videos */
+      border: none;
+      /* Remove any border */
+      padding: 0;
+      /* Remove any padding */
+      background: none;
+      /* Remove any background */
+    }
+
+    .video-container {
+      position: relative;
+      width: 50%;
+      /* Adjust the width of each video container */
+      overflow: hidden;
+      /* Ensure the video doesn't overflow the container */
+      border-radius: 10px;
+      /* Apply rounded corners */
+    }
+
+    .video-container video {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      /* Ensure the video itself has rounded corners */
+      border: 1px solid #ccc;
+      /* Add a border around the video */
+    }
+
+    .carousel-caption {
+      position: relative;
+      left: 0;
+      color: black;
+      margin-top: 10px;
+      /* Adjust margin as needed */
+      text-align: center;
+    }
+
+    .carousel-inner {
+      overflow: hidden;
+      /* Ensure no overflow is visible during transitions */
+      margin: 0;
+      /* Remove any margin */
+      padding: 0;
+      /* Remove any padding */
+    }
+
+    .text-box {
+      position: absolute;
+      top: 0;
+      /* Adjust position above the video wrapper */
+      left: 0;
+      /* Position it in the left upper corner */
+      /* background-color: black; */
+      color: white;
+      padding: 5px 10px;
+      border-radius: 10px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+      z-index: 1;
+      /* Ensure it stays above other elements */
+      font-size: 12px;
+
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .button-container a {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 20px;
+      border-radius: 30px;
+      border: 1px solid #ccc;
+      text-decoration: none;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .button-container a i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <section class="hero">
+    <div class="hero-body no-bottom-padding">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title"><span
+                style="font-family: 'Courier New', monospace;">T2V-Turbo-v2</span>: Enhancing Video Generation Model
+              Post-Training Through Data, Reward, and Conditional Guidance Design</h1>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://sites.google.com/view/jiachenli">Jiachen
+                  Li</a><sup>1</sup>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="https://scholar.google.com/citations?user=rytqPd8AAAAJ&hl=en&oi=sra/">Qian
+                  Long</a><sup>2</sup>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="https://scholar.google.com/citations?user=0yfhzZgAAAAJ&hl=en">Jian
+                  Zheng</a><sup>3</sup>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="https://xfgao.github.io/">Xiaofeng
+                  Gao</a><sup>3</sup>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="https://www.linkedin.com/in/rpiramuthu/">Robinson
+                  Piramuthu</a><sup>3</sup>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              </span>
+              <span class="author-block">
+                <a href="https://wenhuchen.github.io//">Wenhu
+                  Chen</a><sup>4</sup>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="https://sites.cs.ucsb.edu/~william/">William Yang Wang</a><sup>1</sup>
+                <div class="is-size-5 publication-authors" style="margin-top: 15px;">
+                  <span class="author-block"><sup>1</sup>UC Santa Barbara,</span>
+                  <span class="author-block"><sup>2</sup>UC Los Angeles,</span>
+                  <span class="author-block"><sup>3</sup>Amazon AGI,</span>
+                  <span class="author-block"><sup>4</sup>University of Waterloo</span>
+                </div>
+              </span>
+            </div>
+            <div class="button-container">
+              <!-- <a href="https://arxiv.org/abs/2407.08737" class="btn btn-outline-secondary"> -->
+              <i class="fa-solid fa-file-pdf"></i> Paper
+              </a>
+              <!-- <a href="https://github.com/Ji4chenLi/t2v-turbo" class="btn btn-outline-secondary"> -->
+              <i class="fa-brands fa-github"></i> Code
+              </a>
+              <!-- <a href="https://huggingface.co/jiachenli-ucsb/T2V-Turbo-VC2" class="btn btn-outline-secondary"> -->
+              <i class="fa-solid fa-laptop"></i> Demo
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+  </section>
+
+  <div class="gallery">
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row1/v2_light wind, feathers moving, she moves her gaze, 4k-1.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row1/v2_camera pan from left to right, a man wearing sunglasses and business suit-3.mp4"
+            type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row1/v2_A musician strums his guitar, serenading the moonlit night-3.mp4"
+            type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row1/v2_Turtle swimming in ocean.-3.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row1/v2_Pikachu snowboarding.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row1/v2_Yoda playing guitar on the stage-3.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row1/v2_Vincent van Gogh is painting in the room-1.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row1/v2_Slow motion leaves fall from a tree, swirling through the air.-3.mp4"
+            type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row2/v2_a teddy bear is swimming in the ocean.-4.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row2/v2_A raccoon is playing the electronic guitar.-0.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row2/v2_An astronaut is riding a horse in the space in a photorealistic style.-4.mp4"
+            type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source
+            src="videos/row2/v2_A cute happy Corgi playing in park, sunset by Hokusai, in the style of Ukiyo-1.mp4"
+            type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row2/v2_A cat wearing sunglasses at a pool-1.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row2/v2_a horse galloping across an open field-2.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row2/v2_A jellyfish floating through the ocean, with bioluminescent tentacles-1.mp4"
+            type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row2/v2_A panda playing on a swing set-0.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row3/v2_Two pandas discussing an academic paper.-4.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row3/v2_Close up of grapes on a rotating table.-0.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row3/v2_a person walking in the snowstorm-3.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row3/v2_a dog wearing vr goggles on a boat-2.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row3/v2_Cinematic shot of Van Gogh's selfie, Van Gogh style-2.mp4" type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row3/v2_Sunset time lapse at the beach with moving clouds and colors in the sky.-3.mp4"
+            type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <div class="flipper">
+        <video class="front" autoplay loop muted>
+          <source src="videos/row3/v2_Campfire at night in a snowy forest with starry sky in the background.-2.mp4"
+            type="video/mp4">
+        </video>
+        <video class="back" autoplay loop muted>
+          <source src="videos/row3/v2_A panda standing on a surfboard in the ocean in sunset.-0.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+
+  </div> <!-- Closing gallery div -->
+
+
+  <section class="hero is-light is-small">
+    <div class="hero-body">
+      <div class="container is-two-thirds">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-two-thirds">
+            <h2 class="title is-3">Abstract</h2>
+          </div>
+        </div>
+
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-two-thirds ">
+            <div class="content has-text-justified">
+              In this paper, we focus on enhancing a diffusion-based text-to-video (T2V) model during the post-training
+              phase by distilling a highly capable consistency model from a pretrained T2V model. Our proposed method,
+              T2V-Turbo-v2, introduces a significant advancement by integrating various supervision signals, including
+              high-quality training data, reward model feedback, and conditional guidance, into the consistency
+              distillation process. Through comprehensive ablation studies, we highlight the crucial importance of
+              tailoring datasets to specific learning objectives and the effectiveness of learning from diverse reward
+              models for enhancing both the visual quality and text-video alignment. Additionally, we highlight the vast
+              design space of conditional guidance strategies, which centers on designing an effective energy function
+              to augment the teacher ODE solver. We demonstrate the potential of this approach by extracting motion
+              guidance from the training datasets and incorporating it into the ODE solver, showcasing its effectiveness
+              in improving the motion quality of the generated videos with the improved motion-related metrics from
+              VBench and T2V-CompBench. Empirically, our T2V-Turbo-v2 establishes a new <span
+                style="font-weight: bold">state-of-the-art result on VBench, with a Total score of 85.13</span>,
+              surpassing proprietary systems such as Gen-3 and Kling.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- ######################## -->
+  <!-- Training Pipeline. -->
+  <div class="columns is-centered has-text-centered">
+    <div class="column is-two-thirds">
+      <h3 class="title pt-5 pb-2 has-text-centered">
+        <strong>Overview of Training Pipeline</strong>
+      </h3>
+      <div class="content has-text-justified">
+        <img src="static/image/t2v-turbo-v2-pipe.jpg" alt="" srcset="">
+      </div>
+
+      <div class="content has-text-justified">
+        <p>Training pipeline of our <span style="font-family: 'Courier New', monospace;">T2V-Turbo-v2</span>. When
+          augmenting the teacher PF-ODE solver with CFG and motion guidance, we extract motion prior
+          \(A(\boldsymbol{z}_{t_{n+k}}^\text{ref})\) from the training videos and distill it into the student CM
+          \(\boldsymbol{f}_{\theta}\) along with the CFG.</p>
+      </div>
+    </div>
+  </div>
+  <!--/ Training Pipeline. -->
+
+  <!-- Main Results on VBench. -->
+  <div class="columns is-centered has-text-centered">
+    <div class="column is-two-thirds">
+      <h3 class="title pt-5 pb-2 has-text-centered">
+        <strong>State-of-the-Art Performance on <a href="https://vchitect.github.io/VBench-project/">VBench</a></strong>
+      </h3>
+      <div class="content has-text-justified">
+        <img src="static/image/vbench_results.png" alt="" srcset="">
+      </div>
+
+    </div>
+  </div>
+  <!--/ Main Results on VBench. -->
+
+  <!-- Ablation on data -->
+  <div class="columns is-centered has-text-centered">
+    <div class="columns is-centered">
+      <div class="column is-two-thirds">
+        <h3 class="title pt-5 pb-2 has-text-centered">
+          <strong>Ablation Studies on the Design of Training Datasets</strong>
+        </h3>
+        <div class="content has-text-justified">
+          <img src="static/image/ablate_datasets.png" alt="" srcset="">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="videoCarouselIndicators" class="carousel slide" data-ride="carousel" data-interval="5000">
+    <div class="carousel-inner">
+      <!-- video 1 -->
+      <div class="carousel-item active">
+        <div class="d-flex justify-content-center video-wrapper">
+          <div class="video-container">
+            <div class="text-box">WV</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_datasets/wv_A confused panda in calculus class-1.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="video-container">
+            <div class="text-box">VG + WV</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_datasets/our_A confused panda in calculus class-1.mp4" type="video/mp4">
+            </video>
+          </div>
+          <a class="carousel-control-prev" href="#videoCarouselIndicators" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+          </a>
+          <a class="carousel-control-next" href="#videoCarouselIndicators" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+          </a>
+        </div>
+        <div class="carousel-caption">
+          A confused panda in calculus class
+        </div>
+      </div>
+      <!-- video 2 -->
+      <div class="carousel-item">
+        <div class="d-flex justify-content-center video-wrapper">
+          <div class="video-container">
+            <div class="text-box">WV</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_datasets/wv_An astronaut flying in space-2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="video-container">
+            <div class="text-box">VG + WV</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_datasets/our_An astronaut flying in space-2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <a class="carousel-control-prev" href="#videoCarouselIndicators" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">WV</span>
+          </a>
+          <a class="carousel-control-next" href="#videoCarouselIndicators" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">VG + WV</span>
+          </a>
+        </div>
+        <div class="carousel-caption">
+          An astronaut flying in space
+        </div>
+      </div>
+      <!-- video 3 -->
+      <div class="carousel-item">
+        <div class="d-flex justify-content-center video-wrapper">
+          <div class="video-container">
+            <div class="text-box">WV</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_datasets/wv_A cute raccoon playing guitar in a boat on the ocean-1.mp4"
+                type="video/mp4">
+            </video>
+          </div>
+          <div class="video-container">
+            <div class="text-box">VG + WV</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_datasets/our_A cute raccoon playing guitar in a boat on the ocean-1.mp4"
+                type="video/mp4">
+            </video>
+          </div>
+          <a class="carousel-control-prev" href="#videoCarouselIndicators" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+          </a>
+          <a class="carousel-control-next" href="#videoCarouselIndicators" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+          </a>
+        </div>
+        <div class="carousel-caption">
+          A cute raccoon playing guitar in a boat on the ocean
+        </div>
+      </div>
+      <!-- Add more carousel items as needed -->
+    </div>
+  </div>
+
+
+
+
+
+
+  <!-- ######################## -->
+  <!-- Ablation Studies on RM -->
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h3 class="title pt-5 pb-2 has-text-centered" style="text-align: center; padding-bottom: 10px;">
+          <strong>Ablation Studies on the Deisng of Reward Models</strong>
+        </h3>
+        <div class="content has-text-justified">
+          <img src="static/image/ablate_rm.png" alt="" srcset="">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="videoCarouselIndicators3" class="carousel slide" data-ride="carousel" data-interval="5000">
+    <div class="carousel-inner">
+      <!-- video 1 -->
+      <div class="carousel-item active">
+        <div class="d-flex justify-content-center video-wrapper">
+          <div class="video-container">
+            <div class="text-box">HPSv2.1</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_rm/hpsv2_Vincent van Gogh is painting in the room-1.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="video-container">
+            <div class="text-box">HPSv2.1 + CLIP</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_rm/hpsv2_clip_Vincent van Gogh is painting in the room-1.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="video-container">
+            <div class="text-box">HPSv2.1 + InternV2</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_rm/hpsv2_viclip_Vincent van Gogh is painting in the room-1.mp4"
+                type="video/mp4">
+            </video>
+          </div>
+          <div class="video-container">
+            <div class="text-box">HPSv2.1 + CLIP + InternV2</div>
+            <video class="d-block w-100" autoplay muted loop>
+              <source src="videos/ablate_rm/v2_Vincent van Gogh is painting in the room-1.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+        <!-- Add more carousel items as needed -->
+      </div>
+    </div>
+    <!-- end of Ablation Studies on RM -->
+
+
+
+    <!-- ######################## -->
+    <!-- Ablation Studies on the Effect of Motion Guidance -->
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+          <h3 class="title pt-5 pb-2 has-text-centered" style="text-align: center; padding-bottom: 10px;">
+            <strong>Ablation Studies on the Effect of Motion Guidance</strong>
+          </h3>
+          <div class="content has-text-justified">
+            <img src="static/image/ablate_motion.png" alt="" srcset="">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="videoCarouselIndicators2" class="carousel slide" data-ride="carousel" data-interval="5000">
+      <div class="carousel-inner">
+        <!-- video 1 -->
+        <div class="carousel-item active">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">Before</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/no_motion_A sophisticated chimpanzee in a tweed jacket and glasses ponders over a chessboard-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">After</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/w_motion_A sophisticated chimpanzee in a tweed jacket and glasses ponders over a chessboard-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            A sophisticated chimpanzee in a tweed jacket and glasses ponders over a chessboard.
+          </div>
+        </div>
+        <!-- video 2 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/no_motion_A Corgi dog riding a bike in Times Square. It is wearing sunglasses and a beach hat.-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/w_motion_A Corgi dog riding a bike in Times Square. It is wearing sunglasses and a beach hat.-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            A Corgi dog riding a bike in Times Square. It is wearing sunglasses and a beach hat.
+          </div>
+        </div>
+        <!-- video 3 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/no_motion_a shiba inu-0.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/w_motion_a shiba inu-0.mp4" type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            a shiba inu
+          </div>
+        </div>
+        <!-- video 4 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/no_motion_a dog running happily-0.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/w_motion_a dog running happily-0.mp4" type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            A fox washing the dishes
+          </div>
+        </div>
+        <!-- video 5 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/no_motion_camera pan from left to right, a man wearing sunglasses and business suit-3.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/w_motion_camera pan from left to right, a man wearing sunglasses and business suit-3.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            camera pan from left to right, a man wearing sunglasses and business suit
+          </div>
+        </div>
+        <!-- video 6 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/no_motion_a person walking in the snowstorm-3.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/w_motion_a person walking in the snowstorm-3.mp4" type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            a person walking in the snowstorm
+          </div>
+        </div>
+        <!-- video 6 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/no_motion_Turtle swimming in ocean.-3.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/w_motion_Turtle swimming in ocean.-3.mp4" type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            Turtle swimming in ocean.
+          </div>
+        </div>
+        <!-- video 7 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/no_motion_A musician strums his guitar, serenading the moonlit night-3.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source
+                  src="videos/ablate_motion/w_motion_A musician strums his guitar, serenading the moonlit night-3.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            A musician strums his guitar, serenading the moonlit night
+          </div>
+        </div>
+        <!-- video 8 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/no_motion_A cute raccoon playing guitar in a boat on the ocean-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/w_motion_A cute raccoon playing guitar in a boat on the ocean-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            A cute raccoon playing guitar in a boat on the ocean
+          </div>
+        </div>
+        <!-- video 9 -->
+        <div class="carousel-item">
+          <div class="d-flex justify-content-center video-wrapper">
+            <div class="video-container">
+              <div class="text-box">w/o MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/no_motion_a cow bending down to drink water from a river-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <div class="video-container">
+              <div class="text-box">w/ MG</div>
+              <video class="d-block w-100" autoplay muted loop>
+                <source src="videos/ablate_motion/w_motion_a cow bending down to drink water from a river-1.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <a class="carousel-control-prev" href="#videoCarouselIndicators2" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/o MG</span>
+            </a>
+            <a class="carousel-control-next" href="#videoCarouselIndicators2" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">w/ MG</span>
+            </a>
+          </div>
+          <div class="carousel-caption">
+            a cow bending down to drink water from a river
+          </div>
+        </div>
+
+        <!-- Add more carousel items as needed -->
+      </div>
+    </div>
+
+    <section class="section" id="BibTeX">
+      <div class="container is-max-desktop content">
+        <h2 class="title">BibTeX</h2>
+        <pre><code>@misc{li2024t2vturbo,
+    title={T2V-Turbo-v2: Enhancing Video Generation Model Post-Training Through Data, Reward, and Conditional Guidance Design},
+    author={Jiachen Li and Long Qian and Jian Zheng and Xiaofeng Gao and Robinson Piramuthu and Wenhu Chen and William Yang Wang},
+    journal={ARXIV},
+    year={2024}
+  }
+        </code></pre>
+      </div>
+    </section>
+
+
+    <footer class="footer">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-8">
+            <div class="content">
+              <p style="text-align: center">
+                Website templated borrowed from <a href="vader-vid.github.io">Vader and <a
+                    href="https://nerfies.github.io/">Nerfies.</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+</body>
+
+</html>
